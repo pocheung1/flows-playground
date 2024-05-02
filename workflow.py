@@ -91,7 +91,7 @@ def generate_types():
     sce_types = DominoTask(
         name="Generate SCE Types",
         command="python /mnt/code/scripts/generate-sce-types.py",
-        environment="Domino Standard Environment Py3.9 R4.3",
+        environment="V2 Flyte Env",
         hardware_tier="Small",
         inputs=[
             Input(name="sdtm_data_path", type=str, value="/some/path/to/data")
@@ -105,7 +105,7 @@ def generate_types():
     ml_types = DominoTask(
         name="Generate ML Types",
         command="python /mnt/code/scripts/generate-ml-types.py",
-        environment="Domino Standard Environment Py3.9 R4.3",
+        environment="V2 Flyte Env",
         hardware_tier="Small",
         inputs=[
             Input(name="batch_size", type=int, value=32),
