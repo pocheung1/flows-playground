@@ -86,12 +86,13 @@ def training_subworkflow(data_path: str) -> FlyteFile:
 
 # pyflyte run --remote workflow.py generate_types 
 @workflow
-def generate_types(): 
+def generate_types():
+    environment = "5.10 Domino Standard Environment Py3.9 R4.3.2"
 
     sce_types = DominoTask(
         name="Generate SCE Types",
         command="python /mnt/code/scripts/generate-sce-types.py",
-        environment="V2 Flyte Env",
+        environment=environment,
         hardware_tier="Small",
         inputs=[
             Input(name="sdtm_data_path", type=str, value="/some/path/to/data")
@@ -105,7 +106,7 @@ def generate_types():
     ml_types = DominoTask(
         name="Generate ML Types",
         command="python /mnt/code/scripts/generate-ml-types.py",
-        environment="V2 Flyte Env",
+        environment=environment,
         hardware_tier="Small",
         inputs=[
             Input(name="batch_size", type=int, value=32),
