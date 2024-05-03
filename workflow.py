@@ -87,7 +87,7 @@ def training_subworkflow(data_path: str) -> FlyteFile:
 # pyflyte run --remote workflow.py generate_types 
 @workflow
 def generate_types():
-    environment = "5.10 Domino Standard Environment Py3.9 R4.3.2"
+    environment = "Domino Standard Environment Py3.9 R4.3"
 
     sce_types = DominoTask(
         name="Generate SCE Types",
