@@ -2,8 +2,10 @@ from utils.flyte import DominoTask, Input, Output
 from flytekit import workflow
 from flytekit.types.file import FlyteFile
 from flytekit.types.directory import FlyteDirectory
-from typing import TypeVar, Optional, List, Dict
-import pandas as pd
+from typing import TypeVar, List, Dict
+
+DSE = "Domino Standard Environment Py3.9 R4.3"
+
 
 @workflow
 def training_workflow(data_path: str) -> FlyteFile: 
@@ -24,7 +26,7 @@ def training_workflow(data_path: str) -> FlyteFile:
     data_prep_results = DominoTask(
         name="Prepare data",
         command="python /mnt/code/scripts/prep-data.py",
-        environment="Data Prep Environment",
+        environment=DSE,
         hardware_tier="Small",
         inputs=[
             Input(name="data_path", type=str, value=data_path),
@@ -37,7 +39,7 @@ def training_workflow(data_path: str) -> FlyteFile:
     training_results = DominoTask(
         name="Train model",
         command="python /mnt/code/scripts/train-model.py",
-        environment="Training Environment",
+        environment=DSE,
         hardware_tier="Medium",
         inputs=[
             Input(name="processed_data", type=FlyteFile, value=data_prep_results['processed_data']),
@@ -57,7 +59,7 @@ def training_subworkflow(data_path: str) -> FlyteFile:
     data_prep_results = DominoTask(
         name="Prepare data",
         command="python /mnt/code/scripts/prep-data.py",
-        environment="Data Prep Environment",
+        environment=DSE,
         hardware_tier="Small",
         inputs=[
             Input(name="data_path", type=str, value=data_path),
@@ -70,7 +72,7 @@ def training_subworkflow(data_path: str) -> FlyteFile:
     training_results = DominoTask(
         name="Train model",
         command="python /mnt/code/scripts/train-model.py",
-        environment="Training Environment",
+        environment=DSE,
         hardware_tier="Medium",
         inputs=[
             Input(name="processed_data", type=FlyteFile, value=data_prep_results['processed_data']),
@@ -87,12 +89,10 @@ def training_subworkflow(data_path: str) -> FlyteFile:
 # pyflyte run --remote workflow.py generate_types 
 @workflow
 def generate_types():
-    environment = "Domino Standard Environment Py3.9 R4.3"
-
     sce_types = DominoTask(
         name="Generate SCE Types",
         command="python /mnt/code/scripts/generate-sce-types.py",
-        environment=environment,
+        environment=DSE,
         hardware_tier="Small",
         inputs=[
             Input(name="sdtm_data_path", type=str, value="/some/path/to/data")
@@ -106,7 +106,7 @@ def generate_types():
     ml_types = DominoTask(
         name="Generate ML Types",
         command="python /mnt/code/scripts/generate-ml-types.py",
-        environment=environment,
+        environment=DSE,
         hardware_tier="Small",
         inputs=[
             Input(name="batch_size", type=int, value=32),
@@ -138,6 +138,7 @@ def generate_types():
 
     return 
 
+
 # pyflyte run --remote workflow.py training_workflow --data_path /mnt/code/artifacts/data.csv
 @workflow
 def training_workflow_git(data_path: str) -> FlyteFile: 
@@ -158,7 +159,7 @@ def training_workflow_git(data_path: str) -> FlyteFile:
     data_prep_results = DominoTask(
         name="Prepare data ",
         command="python /mnt/code/scripts/prep-data.py",
-        environment="Data Prep Environment",
+        environment=DSE,
         hardware_tier="Small",
         inputs=[
             Input(name="data_path", type=str, value=data_path)
@@ -171,7 +172,7 @@ def training_workflow_git(data_path: str) -> FlyteFile:
     training_results = DominoTask(
         name="Train model ",
         command="python /mnt/code/scripts/train-model.py",
-        environment="Training Environment",
+        environment=DSE,
         hardware_tier="Medium",
         inputs=[
             Input(name="processed_data", type=FlyteFile, value=data_prep_results['processed_data']),
@@ -185,6 +186,7 @@ def training_workflow_git(data_path: str) -> FlyteFile:
 
     return training_results['model']
 
+
 # pyflyte run --remote workflow.py training_workflow_nested --data_path /mnt/code/artifacts/data.csv
 @workflow
 def training_workflow_nested(data_path: str): 
@@ -194,7 +196,7 @@ def training_workflow_nested(data_path: str):
     results = DominoTask(
         name="Final task",
         command="sleep 100",
-        environment="Training Environment",
+        environment=DSE,
         hardware_tier="Medium",
         inputs=[
             Input(name="model", type=FlyteFile, value=model)
