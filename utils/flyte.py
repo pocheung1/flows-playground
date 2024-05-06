@@ -1,10 +1,9 @@
 import os
 from typing import List
-from flytekit.types.file import FlyteFile
-from flytekitplugins.domino.task import DominoJobConfig, DominoJobTask, GitRef, EnvironmentRevisionSpecification, EnvironmentRevisionType, DatasetSnapshot
-from flytekit.loggers import logger
+from flytekitplugins.domino.task import DominoJobConfig, DominoJobTask, GitRef
 from dataclasses import dataclass
 from domino import Domino
+
 
 @dataclass
 class Input:
@@ -12,6 +11,7 @@ class Input:
     name: str
     type: type
     value: any
+
 
 @dataclass
 class Output:
@@ -30,7 +30,6 @@ def DominoTask(
     outputs: List[Output] = None,
 ) -> DominoJobTask:
 
-    api_key=os.environ.get('DOMINO_USER_API_KEY')
     project_owner = os.environ.get("DOMINO_PROJECT_OWNER")
     project_name = os.environ.get("DOMINO_PROJECT_NAME")
 
@@ -56,7 +55,6 @@ def DominoTask(
 
     job_config = DominoJobConfig(
         Title=name,
-        ApiKey=api_key,
         Command=command,
         CommitId=dfs_commit_id, 
         MainRepoGitRef=GitRef(Type="head"), # TODO: Allow user to pick specific branch & commit
