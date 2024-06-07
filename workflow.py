@@ -3,8 +3,9 @@ from flytekit import workflow
 from flytekit.types.file import FlyteFile
 from flytekit.types.directory import FlyteDirectory
 from typing import TypeVar, List, Dict
+from flytekitplugins.domino.task import DominoJobConfig, DominoJobTask
 
-DSE = "Domino Standard Environment Py3.9 R4.3"
+DSE = "Domino Standard Environment Py3.10 R4.4"
 
 
 @workflow
@@ -23,68 +24,78 @@ def training_workflow(data_path: str) -> FlyteFile:
     :return: The training results as a model
     """
 
-    data_prep_results = DominoTask(
+    prepare_data = DominoJobTask(
         name="Prepare data",
-        command="python /mnt/code/scripts/prep-data.py",
-        environment=DSE,
-        hardware_tier="Small",
-        inputs=[
-            Input(name="data_path", type=str, value=data_path),
-        ],
-        outputs=[
-            Output(name="processed_data", type=FlyteFile)
-        ]
+        domino_job_config=DominoJobConfig(
+            Command="python /mnt/code/scripts/prep-data.py",
+        ),
+        inputs={'data_path': str},
+        outputs={'processed_data': FlyteFile},
+        use_latest=True,
     )
+    prepare_data_results = prepare_data(data_path=data_path)
 
-    training_results = DominoTask(
+    train_model = DominoJobTask(
         name="Train model",
-        command="python /mnt/code/scripts/train-model.py",
-        environment=DSE,
-        hardware_tier="Medium",
-        inputs=[
-            Input(name="processed_data", type=FlyteFile, value=data_prep_results['processed_data']),
-            Input(name="epochs", type=int, value=10),
-            Input(name="batch_size", type=int, value=32)
-        ],
-        outputs=[
-            Output(name="model", type=FlyteFile)
-        ]
+        domino_job_config=DominoJobConfig(
+            Command="python /mnt/code/scripts/train-model.py",
+        ),
+        inputs={
+            'processed_data': FlyteFile,
+            'epochs': int,
+            'batch_size': int,
+        },
+        outputs={
+            'model': FlyteFile,
+        },
+        use_latest=True,
+    )
+    train_model_results = train_model(
+        processed_data=prepare_data_results['processed_data'],
+        epochs=10,
+        batch_size=32,
     )
 
-    return training_results['model']
+    return train_model_results['model']
+
 
 @workflow
-def training_subworkflow(data_path: str) -> FlyteFile: 
+def training_subworkflow(data_path: str) -> FlyteFile:
 
-    data_prep_results = DominoTask(
+    prepare_data = DominoJobTask(
         name="Prepare data",
-        command="python /mnt/code/scripts/prep-data.py",
-        environment=DSE,
-        hardware_tier="Small",
-        inputs=[
-            Input(name="data_path", type=str, value=data_path),
-        ],
-        outputs=[
-            Output(name="processed_data", type=FlyteFile)
-        ]
+        domino_job_config=DominoJobConfig(
+            Command="python /mnt/code/scripts/prep-data.py",
+        ),
+        inputs={'data_path': str},
+        outputs={'processed_data': FlyteFile},
+        use_latest=True,
     )
+    prepare_data_results = prepare_data(data_path=data_path)
 
-    training_results = DominoTask(
+    train_model = DominoJobTask(
         name="Train model",
-        command="python /mnt/code/scripts/train-model.py",
-        environment=DSE,
-        hardware_tier="Medium",
-        inputs=[
-            Input(name="processed_data", type=FlyteFile, value=data_prep_results['processed_data']),
-            Input(name="epochs", type=int, value=10),
-            Input(name="batch_size", type=int, value=32)
-        ],
-        outputs=[
-            Output(name="model", type=FlyteFile)
-        ]
+        domino_job_config=DominoJobConfig(
+            Command="python /mnt/code/scripts/train-model.py",
+        ),
+        inputs={
+            'processed_data': FlyteFile,
+            'epochs': int,
+            'batch_size': int,
+        },
+        outputs={
+            'model': FlyteFile,
+        },
+        use_latest=True,
+    )
+    train_model_results = train_model(
+        processed_data=prepare_data_results['processed_data'],
+        epochs=10,
+        batch_size=32,
     )
 
-    return training_results['model']
+    return train_model_results['model']
+
 
 # pyflyte run --remote workflow.py generate_types 
 @workflow
@@ -139,68 +150,18 @@ def generate_types():
     return 
 
 
-# pyflyte run --remote workflow.py training_workflow --data_path /mnt/code/artifacts/data.csv
-@workflow
-def training_workflow_git(data_path: str) -> FlyteFile: 
-    """
-    Sample data preparation and training workflow
-
-    This workflow accepts a path to a CSV for some initial input and simulates
-    the processing of the data and usage of the processed data in a training job.
-
-    To run this workflowp, execute the following line in the terminal
-
-    pyflyte run --remote workflow.py training_workflow --data_path /mnt/code/artifacts/data.csv
-
-    :param data_path: Path of the CSV file data
-    :return: The training results as a model
-    """
-
-    data_prep_results = DominoTask(
-        name="Prepare data ",
-        command="python /mnt/code/scripts/prep-data.py",
-        environment=DSE,
-        hardware_tier="Small",
-        inputs=[
-            Input(name="data_path", type=str, value=data_path)
-        ],
-        outputs=[
-            Output(name="processed_data", type=FlyteFile)
-        ]
-    )
-
-    training_results = DominoTask(
-        name="Train model ",
-        command="python /mnt/code/scripts/train-model.py",
-        environment=DSE,
-        hardware_tier="Medium",
-        inputs=[
-            Input(name="processed_data", type=FlyteFile, value=data_prep_results['processed_data']),
-            Input(name="epochs", type=int, value=10),
-            Input(name="batch_size", type=int, value=32)
-        ],
-        outputs=[
-            Output(name="model", type=FlyteFile)
-        ]
-    )
-
-    return training_results['model']
-
-
 # pyflyte run --remote workflow.py training_workflow_nested --data_path /mnt/code/artifacts/data.csv
 @workflow
 def training_workflow_nested(data_path: str): 
 
     model = training_subworkflow(data_path=data_path)
 
-    results = DominoTask(
+    training_task = DominoJobTask(
         name="Final task",
-        command="sleep 100",
-        environment=DSE,
-        hardware_tier="Medium",
-        inputs=[
-            Input(name="model", type=FlyteFile, value=model)
-        ]
+        domino_job_config=DominoJobConfig(
+            Command="sleep 100",
+        ),
+        inputs={'model': FlyteFile},
+        use_latest=True,
     )
-
-    return 
+    return training_task(model=model)
