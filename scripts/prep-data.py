@@ -14,6 +14,8 @@ named_input = "data_path"
 csv_file = read_input(named_input)
 df = pd.read_csv(csv_file)
 
+raise Exception("prepare data failed")
+
 # Process data
 print(df)
 print("Preparing the data")
