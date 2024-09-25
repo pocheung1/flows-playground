@@ -30,7 +30,7 @@ def training_workflow(data_path: str) -> FlyteFile:
             Command="python /mnt/code/scripts/prep-data.py",
         ),
         inputs={'data_path': str},
-        outputs={'processed_data': FlyteFile},
+        outputs={'processed_data': FlyteFile[TypeVar("csv")]},
         use_latest=True,
     )
     prepare_data_results = prepare_data(data_path=data_path)
@@ -41,12 +41,12 @@ def training_workflow(data_path: str) -> FlyteFile:
             Command="python /mnt/code/scripts/train-model.py",
         ),
         inputs={
-            'processed_data': FlyteFile,
+            'processed_data': FlyteFile[TypeVar("csv")],
             'epochs': int,
             'batch_size': int,
         },
         outputs={
-            'model': FlyteFile,
+            'model': FlyteFile[TypeVar("csv")],
         },
         use_latest=True,
     )
@@ -68,7 +68,7 @@ def training_subworkflow(data_path: str) -> FlyteFile:
             Command="python /mnt/code/scripts/prep-data.py",
         ),
         inputs={'data_path': str},
-        outputs={'processed_data': FlyteFile},
+        outputs={'processed_data': FlyteFile[TypeVar("csv")]},
         use_latest=True,
     )
     prepare_data_results = prepare_data(data_path=data_path)
@@ -79,12 +79,12 @@ def training_subworkflow(data_path: str) -> FlyteFile:
             Command="python /mnt/code/scripts/train-model.py",
         ),
         inputs={
-            'processed_data': FlyteFile,
+            'processed_data': FlyteFile[TypeVar("csv")],
             'epochs': int,
             'batch_size': int,
         },
         outputs={
-            'model': FlyteFile,
+            'model': FlyteFile[TypeVar("csv")],
         },
         use_latest=True,
     )
@@ -161,7 +161,7 @@ def training_workflow_nested(data_path: str):
         domino_job_config=DominoJobConfig(
             Command="sleep 100",
         ),
-        inputs={'model': FlyteFile},
+        inputs={'model': FlyteFile[TypeVar("csv")]},
         use_latest=True,
     )
     return training_task(model=model)
