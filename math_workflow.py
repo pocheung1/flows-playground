@@ -7,7 +7,7 @@ def math_workflow(a: int, b: int) -> float:
     # Create first task
     add_task = DominoJobTask(
         name='Add numbers',
-        domino_job_config=DominoJobConfig(Command="python add.py"),
+        domino_job_config=DominoJobConfig(Command="python /mnt/code/add.py"),
         inputs={'first_value': int, 'second_value': int},
         outputs={'sum': int},
         use_latest=True
@@ -17,7 +17,7 @@ def math_workflow(a: int, b: int) -> float:
     # Create second task
     sqrt_task = DominoJobTask(
         name='Square root',
-        domino_job_config=DominoJobConfig(Command="python sqrt.py"),
+        domino_job_config=DominoJobConfig(Command="python /mnt/code/sqrt.py"),
         inputs={'value': int},
         outputs={'sqrt': float},
         use_latest=True
